@@ -1,4 +1,4 @@
-# projeto-wordpress
+# Projeto Wordpress xOps
 
 ### Adriana
 ### Karin
