@@ -141,3 +141,43 @@ resource "azurerm_managed_disk" "wordpress" {
   disk_size_gb = 32
 }
 
+# Configuração wordpress
+# Criar uma instância de máquina virtual para o WordPress
+resource "azurerm_linux_virtual_machine" "wordpress_vm" {
+  name                = "wordpress-vm"
+  resource_group_name = azurerm_resource_group.wordpress_rg.name
+  location            = azurerm_resource_group.wordpress_rg.location
+  size                = "Standard_B1s"
+  admin_username      = "adminuser"
+  admin_password      = "P@ssword123!"
+  network_interface_ids = [
+    azurerm_network_interface.wordpress_nic.id,
+  ]
+  os_disk {
+    name              = "wordpress-vm-osdisk"
+    caching           = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+  
+  tags = {
+    environment = "production"
+  }
+
+  # Instalar o WordPress e as dependências no boot
+  custom_data = <<-EOF
+                #!/bin/bash
+                apt-get update
+                apt-get install -y apache2 mysql-client php php-mysql libapache2-mod-php
+                wget https://wordpress.org/latest.tar.gz
+                tar -xzvf latest.tar.gz
+                cp -r wordpress/* /var/www/html/
+                chown -R www-data:www-data /var/www/html/
+                systemctl restart apache2
+                EOF
+}
